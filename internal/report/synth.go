@@ -1,7 +1,7 @@
 package report
 
 import (
-	"github.com/google/pprof/profile"
+	"github.com/Kolo7/pprof-tool/profile"
 )
 
 // synthCode assigns addresses to locations without an address.

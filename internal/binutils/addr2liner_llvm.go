@@ -23,7 +23,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/google/pprof/internal/plugin"
+	"github.com/Kolo7/pprof-tool/internal/plugin"
 )
 
 const (

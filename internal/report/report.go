@@ -27,10 +27,10 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/google/pprof/internal/graph"
-	"github.com/google/pprof/internal/measurement"
-	"github.com/google/pprof/internal/plugin"
-	"github.com/google/pprof/profile"
+	"github.com/Kolo7/pprof-tool/internal/graph"
+	"github.com/Kolo7/pprof-tool/internal/measurement"
+	"github.com/Kolo7/pprof-tool/internal/plugin"
+	"github.com/Kolo7/pprof-tool/profile"
 )
 
 // Output formats.
@@ -848,7 +848,7 @@ func printTraces(w io.Writer, rpt *Report) error {
 			nodes := locations[loc.ID]
 			for i, n := range nodes {
 				// The inline flag may be inaccurate if 'show' or 'hide' filter is
-				// used. See https://github.com/google/pprof/issues/511.
+				// used. See https://github.com/Kolo7/pprof-tool/issues/511.
 				inline := i != len(nodes)-1
 				stack = append(stack, stk{&n.Info, inline})
 			}

@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/google/pprof/internal/proftest"
-	"github.com/google/pprof/profile"
+	"github.com/Kolo7/pprof-tool/internal/proftest"
+	"github.com/Kolo7/pprof-tool/profile"
 )
 
 const mainBinary = "/bin/main"

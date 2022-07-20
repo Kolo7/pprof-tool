@@ -20,9 +20,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/google/pprof/internal/graph"
-	"github.com/google/pprof/internal/measurement"
-	"github.com/google/pprof/internal/report"
+	"github.com/Kolo7/pprof-tool/internal/graph"
+	"github.com/Kolo7/pprof-tool/internal/measurement"
+	"github.com/Kolo7/pprof-tool/internal/report"
 )
 
 type treeNode struct {

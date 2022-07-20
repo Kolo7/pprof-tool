@@ -27,10 +27,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/pprof/internal/graph"
-	"github.com/google/pprof/internal/plugin"
-	"github.com/google/pprof/internal/report"
-	"github.com/google/pprof/profile"
+	"github.com/Kolo7/pprof-tool/internal/graph"
+	"github.com/Kolo7/pprof-tool/internal/plugin"
+	"github.com/Kolo7/pprof-tool/internal/report"
+	"github.com/Kolo7/pprof-tool/profile"
 )
 
 // webInterface holds the state needed for serving a browser based interface.
@@ -198,7 +198,7 @@ func defaultWebServer(args *plugin.HTTPServerArgs) error {
 	// We serve the ui at /ui/ and redirect there from the root. This is done
 	// to surface any problems with serving the ui at a non-root early. See:
 	//
-	// https://github.com/google/pprof/pull/348
+	// https://github.com/Kolo7/pprof-tool/pull/348
 	mux := http.NewServeMux()
 	mux.Handle("/ui/", http.StripPrefix("/ui", handler))
 	mux.Handle("/", redirectWithQuery("/ui"))

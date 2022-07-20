@@ -28,7 +28,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/google/pprof/internal/plugin"
+	"github.com/Kolo7/pprof-tool/internal/plugin"
 )
 
 var testAddrMap = map[int]string{

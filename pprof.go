@@ -22,8 +22,8 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/Kolo7/pprof-tool/driver"
 	"github.com/chzyer/readline"
-	"github.com/google/pprof/driver"
 )
 
 func main() {
