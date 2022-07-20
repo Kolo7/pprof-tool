@@ -1,4 +1,4 @@
-module pprof-tool
+module github.com/Kolo7/pprof-tool
 
 go 1.17
 
