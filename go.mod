@@ -1,9 +1,10 @@
-module github.com/google/pprof
+module gitlab.seasungame.com/techcenter/bigdata/pprof-tool
 
 go 1.17
 
 require (
 	github.com/chzyer/readline v1.5.0
+	github.com/google/pprof v0.0.0-20220608213341-c488b8fa1db3
 	github.com/ianlancetaylor/demangle v0.0.0-20220319035150-800ac71e25c2
 )
 
