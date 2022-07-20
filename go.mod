@@ -1,4 +1,4 @@
-module gitlab.seasungame.com/techcenter/bigdata/pprof-tool
+module pprof-tool
 
 go 1.17
 
