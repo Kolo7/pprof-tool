@@ -119,14 +119,14 @@ func serveWebInterface(hostport string, p *profile.Profile, o *plugin.Options, d
 		Host:     host,
 		Port:     port,
 		Handlers: map[string]http.Handler{
-			"/":             http.HandlerFunc(ui.dot),
-			"/top":          http.HandlerFunc(ui.top),
-			"/disasm":       http.HandlerFunc(ui.disasm),
-			"/source":       http.HandlerFunc(ui.source),
-			"/peek":         http.HandlerFunc(ui.peek),
-			"/flamegraph":   http.HandlerFunc(ui.flamegraph),
-			"/saveconfig":   http.HandlerFunc(ui.saveConfig),
-			"/deleteconfig": http.HandlerFunc(ui.deleteConfig),
+			"/":             http.HandlerFunc(ui.Dot),
+			"/top":          http.HandlerFunc(ui.Top),
+			"/disasm":       http.HandlerFunc(ui.Disasm),
+			"/source":       http.HandlerFunc(ui.Source),
+			"/peek":         http.HandlerFunc(ui.Peek),
+			"/flamegraph":   http.HandlerFunc(ui.Flamegraph),
+			"/saveconfig":   http.HandlerFunc(ui.SaveConfig),
+			"/deleteconfig": http.HandlerFunc(ui.DeleteConfig),
 			"/download": http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 				w.Header().Set("Content-Type", "application/vnd.google.protobuf+gzip")
 				w.Header().Set("Content-Disposition", "attachment;filename=profile.pb.gz")
@@ -294,8 +294,8 @@ func (ui *webInterface) render(w http.ResponseWriter, req *http.Request, tmpl st
 	w.Write(html.Bytes())
 }
 
-// dot generates a web page containing an svg diagram.
-func (ui *webInterface) dot(w http.ResponseWriter, req *http.Request) {
+// Dot generates a web page containing an svg diagram.
+func (ui *webInterface) Dot(w http.ResponseWriter, req *http.Request) {
 	rpt, errList := ui.makeReport(w, req, []string{"svg"}, nil)
 	if rpt == nil {
 		return // error already reported
@@ -347,7 +347,7 @@ func dotToSvg(dot []byte) ([]byte, error) {
 	return svg, nil
 }
 
-func (ui *webInterface) top(w http.ResponseWriter, req *http.Request) {
+func (ui *webInterface) Top(w http.ResponseWriter, req *http.Request) {
 	rpt, errList := ui.makeReport(w, req, []string{"top"}, func(cfg *config) {
 		cfg.NodeCount = 500
 	})
@@ -366,8 +366,8 @@ func (ui *webInterface) top(w http.ResponseWriter, req *http.Request) {
 	})
 }
 
-// disasm generates a web page containing disassembly.
-func (ui *webInterface) disasm(w http.ResponseWriter, req *http.Request) {
+// Disasm generates a web page containing disassembly.
+func (ui *webInterface) Disasm(w http.ResponseWriter, req *http.Request) {
 	args := []string{"disasm", req.URL.Query().Get("f")}
 	rpt, errList := ui.makeReport(w, req, args, nil)
 	if rpt == nil {
@@ -388,9 +388,9 @@ func (ui *webInterface) disasm(w http.ResponseWriter, req *http.Request) {
 
 }
 
-// source generates a web page containing source code annotated with profile
+// Source generates a web page containing source code annotated with profile
 // data.
-func (ui *webInterface) source(w http.ResponseWriter, req *http.Request) {
+func (ui *webInterface) Source(w http.ResponseWriter, req *http.Request) {
 	args := []string{"weblist", req.URL.Query().Get("f")}
 	rpt, errList := ui.makeReport(w, req, args, nil)
 	if rpt == nil {
@@ -411,8 +411,8 @@ func (ui *webInterface) source(w http.ResponseWriter, req *http.Request) {
 	})
 }
 
-// peek generates a web page listing callers/callers.
-func (ui *webInterface) peek(w http.ResponseWriter, req *http.Request) {
+// Peek generates a web page listing callers/callers.
+func (ui *webInterface) Peek(w http.ResponseWriter, req *http.Request) {
 	args := []string{"peek", req.URL.Query().Get("f")}
 	rpt, errList := ui.makeReport(w, req, args, func(cfg *config) {
 		cfg.Granularity = "lines"
@@ -434,8 +434,8 @@ func (ui *webInterface) peek(w http.ResponseWriter, req *http.Request) {
 	})
 }
 
-// saveConfig saves URL configuration.
-func (ui *webInterface) saveConfig(w http.ResponseWriter, req *http.Request) {
+// SaveConfig saves URL configuration.
+func (ui *webInterface) SaveConfig(w http.ResponseWriter, req *http.Request) {
 	if err := setConfig(ui.settingsFile, *req.URL); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		ui.options.UI.PrintErr(err)
@@ -443,8 +443,8 @@ func (ui *webInterface) saveConfig(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// deleteConfig deletes a configuration.
-func (ui *webInterface) deleteConfig(w http.ResponseWriter, req *http.Request) {
+// DeleteConfig deletes a configuration.
+func (ui *webInterface) DeleteConfig(w http.ResponseWriter, req *http.Request) {
 	name := req.URL.Query().Get("config")
 	if err := removeConfig(ui.settingsFile, name); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)

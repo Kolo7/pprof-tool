@@ -27,9 +27,9 @@ import (
 	"github.com/google/pprof/internal/transport"
 )
 
-// setDefaults returns a new plugin.Options with zero fields sets to
+// SetDefaults returns a new plugin.Options with zero fields sets to
 // sensible defaults.
-func setDefaults(o *plugin.Options) *plugin.Options {
+func SetDefaults(o *plugin.Options) *plugin.Options {
 	d := &plugin.Options{}
 	if o != nil {
 		*d = *o

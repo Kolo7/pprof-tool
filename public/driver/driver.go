@@ -37,7 +37,7 @@ func PProf(eo *plugin.Options) error {
 	// Remove any temporary files created during pprof processing.
 	defer cleanupTempFiles()
 
-	o := setDefaults(eo)
+	o := SetDefaults(eo)
 
 	src, cmd, err := parseFlags(o)
 	if err != nil {
