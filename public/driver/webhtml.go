@@ -17,10 +17,9 @@ package driver
 import (
 	"embed"
 	"fmt"
+	"github.com/google/pprof/third_party/d3flamegraph"
 	"html/template"
 	"os"
-
-	"github.com/Kolo7/pprof-tool/third_party/d3flamegraph"
 )
 
 //go:embed html
