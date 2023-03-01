@@ -15,8 +15,7 @@
 package driver
 
 import (
-	"encoding/json"
-	"html/template"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -25,39 +24,47 @@ import (
 	"github.com/Kolo7/pprof-tool/internal/report"
 )
 
-type treeNode struct {
-	Name      string      `json:"n"`
-	FullName  string      `json:"f"`
-	Cum       int64       `json:"v"`
-	CumFormat string      `json:"l"`
-	Percent   string      `json:"p"`
-	Children  []*treeNode `json:"c"`
+type Tree struct {
+	Self     Node    `json:"node"`
+	Parent   []*Node `json:"parent"`
+	Children []*Node `json:"c"`
 }
 
-// Flamegraph generates a web page containing a flamegraph.
+type Node struct {
+	Name      string `json:"n"`
+	FullName  string `json:"f"`
+	Cum       int64  `json:"v"`
+	CumFormat string `json:"l"`
+	Percent   string `json:"p"`
+	Tree      *Tree  `json:"-"`
+}
+
 func (ui *webInterface) Flamegraph(w http.ResponseWriter, req *http.Request) {
+
+}
+func (ui *webInterface) Flamegraph2(w http.ResponseWriter, req *http.Request) ([]string, []*Tree, error) {
 	// Force the call tree so that the graph is a tree.
 	// Also do not trim the tree so that the flame graph contains all functions.
-	rpt, errList := ui.makeReport(w, req, []string{"svg"}, func(cfg *config) {
+	rpt, errList := ui.MakeReport(w, req, []string{"svg"}, func(cfg *config) {
 		cfg.CallTree = true
 		cfg.Trim = false
 	})
 	if rpt == nil {
-		return // error already reported
+		return nil, nil, fmt.Errorf("pprof flamegraph error: %v", errList) // error already reported
 	}
 
 	// Generate dot graph.
 	g, config := report.GetDOT(rpt)
-	var nodes []*treeNode
+	var nodes []*Node
 	nroots := 0
 	rootValue := int64(0)
 	nodeArr := []string{}
-	nodeMap := map[*graph.Node]*treeNode{}
+	nodeMap := map[*graph.Node]*Node{}
 	// Make all nodes and the map, collect the roots.
 	for _, n := range g.Nodes {
 		v := n.CumValue()
 		fullName := n.Info.PrintableName()
-		node := &treeNode{
+		node := &Node{
 			Name:      graph.ShortenFunctionName(fullName),
 			FullName:  fullName,
 			Cum:       v,
@@ -74,33 +81,43 @@ func (ui *webInterface) Flamegraph(w http.ResponseWriter, req *http.Request) {
 		// Get all node names into an array.
 		nodeArr = append(nodeArr, n.Info.Name)
 	}
+	rootTree := &Tree{
+		Self: Node{
+			Name:      "root",
+			FullName:  "root",
+			Cum:       rootValue,
+			CumFormat: config.FormatValue(rootValue),
+			Percent:   strings.TrimSpace(measurement.Percentage(rootValue, config.Total)),
+		},
+		Children: nodes[0:nroots],
+		Parent:   []*Node{},
+	}
+	rootTree.Self.Tree = rootTree
 	// Populate the child links.
+	trees := make([]*Tree, 0)
 	for _, n := range g.Nodes {
 		node := nodeMap[n]
+		tree := Tree{
+			Self:     *node,
+			Parent:   []*Node{},
+			Children: []*Node{},
+		}
+		node.Tree = &tree
 		for child := range n.Out {
-			node.Children = append(node.Children, nodeMap[child])
+			tree.Children = append(tree.Children, nodeMap[child])
+		}
+		for parent := range n.In {
+			tree.Parent = append(tree.Parent, nodeMap[parent])
+		}
+		trees = append(trees, &tree)
+	}
+
+	for _, n := range nodes[0:nroots] {
+		if n.Tree != nil {
+			n.Tree.Parent = append(n.Tree.Parent, &rootTree.Self)
 		}
 	}
+	trees = append(trees, rootTree)
 
-	rootNode := &treeNode{
-		Name:      "root",
-		FullName:  "root",
-		Cum:       rootValue,
-		CumFormat: config.FormatValue(rootValue),
-		Percent:   strings.TrimSpace(measurement.Percentage(rootValue, config.Total)),
-		Children:  nodes[0:nroots],
-	}
-
-	// JSON marshalling flame graph
-	b, err := json.Marshal(rootNode)
-	if err != nil {
-		http.Error(w, "error serializing flame graph", http.StatusInternalServerError)
-		ui.options.UI.PrintErr(err)
-		return
-	}
-
-	ui.render(w, req, "flamegraph", rpt, errList, config.Labels, webArgs{
-		FlameGraph: template.JS(b),
-		Nodes:      nodeArr,
-	})
+	return nodeArr, trees, nil
 }

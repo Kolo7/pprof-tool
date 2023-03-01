@@ -1126,6 +1126,88 @@ func GetDOT(rpt *Report) (*graph.Graph, *graph.DotConfig) {
 	return g, c
 }
 
+type Caller struct {
+	Calls           string
+	CallsPercentage string
+	Context         string
+}
+
+type PeekRow struct {
+	Flat           string
+	FlatPercentage string
+	SumPercentage  string
+	Cum            string
+	CumPercentage  string
+	InCaller       []*Caller
+	OutCaller      []*Caller
+	Context        string
+}
+
+func GetPeek(rpt *Report) []*PeekRow {
+	g, _, _, _ := rpt.newTrimmedGraph()
+	rpt.selectOutputUnit(g)
+	var flatSum int64
+
+	rx := rpt.options.Symbol
+	matched := 0
+	rows := make([]*PeekRow, 0)
+	for _, n := range g.Nodes {
+		name, flat, cum := n.Info.PrintableName(), n.FlatValue(), n.CumValue()
+
+		// Skip any entries that do not match the regexp (for the "peek" command).
+		if rx != nil && !rx.MatchString(name) {
+			continue
+		}
+		matched++
+		// Print incoming edges.
+		inEdges := n.In.Sort()
+		inCallers := make([]*Caller, 0)
+		for _, in := range inEdges {
+			var inline string
+			if in.Inline {
+				inline = " (inline)"
+			}
+			caller := &Caller{
+				Calls:           rpt.formatValue(in.Weight),
+				CallsPercentage: measurement.Percentage(in.Weight, cum),
+				Context:         in.Src.Info.PrintableName() + inline,
+			}
+			inCallers = append(inCallers, caller)
+		}
+
+		// Print current node.
+		flatSum += flat
+		pr := PeekRow{
+			Flat:           rpt.formatValue(flat),
+			FlatPercentage: measurement.Percentage(flat, rpt.total),
+			SumPercentage:  measurement.Percentage(flatSum, rpt.total),
+			Cum:            rpt.formatValue(cum),
+			CumPercentage:  measurement.Percentage(cum, rpt.total),
+			Context:        name,
+			InCaller:       inCallers,
+		}
+
+		// Print outgoing edges.
+		outEdges := n.Out.Sort()
+		outCallers := make([]*Caller, 0)
+		for _, out := range outEdges {
+			var inline string
+			if out.Inline {
+				inline = " (inline)"
+			}
+			caller := &Caller{
+				Calls:           rpt.formatValue(out.Weight),
+				CallsPercentage: measurement.Percentage(out.Weight, cum),
+				Context:         out.Dest.Info.PrintableName() + inline,
+			}
+			outCallers = append(outCallers, caller)
+		}
+		pr.OutCaller = outCallers
+		rows = append(rows, &pr)
+	}
+	return rows
+}
+
 // printDOT prints an annotated callgraph in DOT format.
 func printDOT(w io.Writer, rpt *Report) error {
 	g, c := GetDOT(rpt)

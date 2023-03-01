@@ -246,9 +246,9 @@ func openBrowser(url string, o *plugin.Options) {
 	o.UI.PrintErr(u.String())
 }
 
-// makeReport generates a report for the specified command.
+// MakeReport generates a report for the specified command.
 // If configEditor is not null, it is used to edit the config used for the report.
-func (ui *webInterface) makeReport(w http.ResponseWriter, req *http.Request,
+func (ui *webInterface) MakeReport(w http.ResponseWriter, req *http.Request,
 	cmd []string, configEditor func(*config)) (*report.Report, []string) {
 	cfg := currentConfig()
 	if err := cfg.applyURL(req.URL.Query()); err != nil {
@@ -296,7 +296,7 @@ func (ui *webInterface) render(w http.ResponseWriter, req *http.Request, tmpl st
 
 // Dot generates a web page containing an svg diagram.
 func (ui *webInterface) Dot(w http.ResponseWriter, req *http.Request) {
-	rpt, errList := ui.makeReport(w, req, []string{"svg"}, nil)
+	rpt, errList := ui.MakeReport(w, req, []string{"svg"}, nil)
 	if rpt == nil {
 		return // error already reported
 	}
@@ -348,7 +348,7 @@ func dotToSvg(dot []byte) ([]byte, error) {
 }
 
 func (ui *webInterface) Top(w http.ResponseWriter, req *http.Request) {
-	rpt, errList := ui.makeReport(w, req, []string{"top"}, func(cfg *config) {
+	rpt, errList := ui.MakeReport(w, req, []string{"top"}, func(cfg *config) {
 		cfg.NodeCount = 500
 	})
 	if rpt == nil {
@@ -366,10 +366,25 @@ func (ui *webInterface) Top(w http.ResponseWriter, req *http.Request) {
 	})
 }
 
+func (ui *webInterface) Top2(w http.ResponseWriter, req *http.Request) (map[string]interface{}, error) {
+	rpt, errList := ui.MakeReport(w, req, []string{"top"}, func(cfg *config) {
+		cfg.NodeCount = 500
+	})
+	if rpt == nil {
+		return nil, fmt.Errorf("pprof top error: %v", errList) // error already reported
+	}
+	top, legend := report.TextItems(rpt)
+	res := map[string]interface{}{
+		"legend": legend,
+		"top":    top,
+	}
+	return res, nil
+}
+
 // Disasm generates a web page containing disassembly.
 func (ui *webInterface) Disasm(w http.ResponseWriter, req *http.Request) {
 	args := []string{"disasm", req.URL.Query().Get("f")}
-	rpt, errList := ui.makeReport(w, req, args, nil)
+	rpt, errList := ui.MakeReport(w, req, args, nil)
 	if rpt == nil {
 		return // error already reported
 	}
@@ -392,7 +407,7 @@ func (ui *webInterface) Disasm(w http.ResponseWriter, req *http.Request) {
 // data.
 func (ui *webInterface) Source(w http.ResponseWriter, req *http.Request) {
 	args := []string{"weblist", req.URL.Query().Get("f")}
-	rpt, errList := ui.makeReport(w, req, args, nil)
+	rpt, errList := ui.MakeReport(w, req, args, nil)
 	if rpt == nil {
 		return // error already reported
 	}
@@ -414,7 +429,7 @@ func (ui *webInterface) Source(w http.ResponseWriter, req *http.Request) {
 // Peek generates a web page listing callers/callers.
 func (ui *webInterface) Peek(w http.ResponseWriter, req *http.Request) {
 	args := []string{"peek", req.URL.Query().Get("f")}
-	rpt, errList := ui.makeReport(w, req, args, func(cfg *config) {
+	rpt, errList := ui.MakeReport(w, req, args, func(cfg *config) {
 		cfg.Granularity = "lines"
 	})
 	if rpt == nil {
@@ -432,6 +447,21 @@ func (ui *webInterface) Peek(w http.ResponseWriter, req *http.Request) {
 	ui.render(w, req, "plaintext", rpt, errList, legend, webArgs{
 		TextBody: out.String(),
 	})
+}
+
+func (ui *webInterface) Peek2(w http.ResponseWriter, req *http.Request) ([]*report.PeekRow, error) {
+	args := []string{"peek", req.URL.Query().Get("f")}
+	rpt, errList := ui.MakeReport(w, req, args, func(cfg *config) {
+		cfg.Granularity = "lines"
+	})
+
+	if rpt == nil {
+		return nil, fmt.Errorf("pprof peek error: %v", errList)
+	}
+
+	peekRow := report.GetPeek(rpt)
+
+	return peekRow, nil
 }
 
 // SaveConfig saves URL configuration.
