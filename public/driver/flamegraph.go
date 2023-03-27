@@ -31,6 +31,7 @@ type Tree struct {
 }
 
 type Node struct {
+	Id        int    `json:"i"`
 	Name      string `json:"n"`
 	FullName  string `json:"f"`
 	Cum       int64  `json:"v"`
@@ -61,16 +62,19 @@ func (ui *webInterface) Flamegraph2(w http.ResponseWriter, req *http.Request) ([
 	nodeArr := []string{}
 	nodeMap := map[*graph.Node]*Node{}
 	// Make all nodes and the map, collect the roots.
+	id := 0
 	for _, n := range g.Nodes {
 		v := n.CumValue()
 		fullName := n.Info.PrintableName()
 		node := &Node{
+			Id:        id,
 			Name:      graph.ShortenFunctionName(fullName),
 			FullName:  fullName,
 			Cum:       v,
 			CumFormat: config.FormatValue(v),
 			Percent:   strings.TrimSpace(measurement.Percentage(v, config.Total)),
 		}
+		id++
 		nodes = append(nodes, node)
 		if len(n.In) == 0 {
 			nodes[nroots], nodes[len(nodes)-1] = nodes[len(nodes)-1], nodes[nroots]
@@ -83,6 +87,7 @@ func (ui *webInterface) Flamegraph2(w http.ResponseWriter, req *http.Request) ([
 	}
 	rootTree := &Tree{
 		Self: Node{
+			Id:        id,
 			Name:      "root",
 			FullName:  "root",
 			Cum:       rootValue,
@@ -92,6 +97,7 @@ func (ui *webInterface) Flamegraph2(w http.ResponseWriter, req *http.Request) ([
 		Children: nodes[0:nroots],
 		Parent:   []*Node{},
 	}
+	id++
 	rootTree.Self.Tree = rootTree
 	// Populate the child links.
 	trees := make([]*Tree, 0)
